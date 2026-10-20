@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 
 const here=(path:string)=>fileURLToPath(new URL(path,import.meta.url));
 export default defineConfig({
-  root:here('./pages'),
+  root:here('./static-app'),
   publicDir:here('./public'),
   base:'/section-library-generator/',
   plugins:[react()],

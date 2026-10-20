@@ -55,7 +55,7 @@ To use another crawler backend, set ATLAS_CRAWLER_URL when building the Pages in
 ## Source map
 
 - app/atlas-app.tsx, app/atlas.css: shared interface.
-- pages/, vite.pages.config.ts: static GitHub Pages entry and build.
+- static-app/, vite.pages.config.ts: static GitHub Pages entry and build.
 - docs/: generated files published by GitHub Pages.
 - lib/analyze.ts: navigation discovery and browser layout analysis.
 - lib/model.ts, lib/presentation.ts: validation, templates, and exports.
