@@ -5,10 +5,21 @@ import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 const dir=path.resolve('.sites-runtime/atlas-tests');await mkdir(dir,{recursive:true});
 const exports={};
-for(const name of ['model','presentation','fetch-page']){
+for(const name of ['model','presentation','fetch-page','crawler-origin']){
  const out=path.join(dir,name+'.mjs');await build({entryPoints:[`lib/${name}.ts`],outfile:out,bundle:true,platform:'node',format:'esm',logLevel:'silent'});exports[name]=await import(pathToFileURL(out).href);
 }
 const {safeUrl}=exports['fetch-page'];
+const {allowedCrawlerOrigin,crawlerHeaders,GITHUB_PAGES_ORIGIN}=exports['crawler-origin'];
+for(const origin of [GITHUB_PAGES_ORIGIN,'https://atlas.example']){
+ const request=new Request('https://atlas.example/api/page',{headers:{origin}});
+ assert(allowedCrawlerOrigin(request));
+ assert.equal(crawlerHeaders(request)['Access-Control-Allow-Origin'],origin===GITHUB_PAGES_ORIGIN?origin:undefined);
+}
+for(const origin of ['https://evil.example','https://brainbytescreative1.github.io.evil.example','null']){
+ const request=new Request('https://atlas.example/api/page',{headers:{origin}});
+ assert.equal(allowedCrawlerOrigin(request),false);
+ assert.equal(crawlerHeaders(request)['Access-Control-Allow-Origin'],undefined);
+}
 for(const url of ['http://localhost/','http://127.0.0.1/','http://0x7f000001/','http://[::1]/','http://192.168.1.2/','http://example.local/','https://user:secret@example.com','file:///etc/passwd','http://example.com:8080/'])assert.throws(()=>safeUrl(url),undefined,url);
 assert.equal(safeUrl('mediavenue.com').href,'https://mediavenue.com/');
 const {validateProject,mergeLayout}=exports.model;

@@ -1,11 +1,14 @@
 import {readPublicPage,PageError} from '@/lib/fetch-page';
+import {allowedCrawlerOrigin,crawlerHeaders} from '@/lib/crawler-origin';
 export const dynamic='force-dynamic';
 const recent=new Map<string,{count:number;reset:number}>();
+export async function OPTIONS(request:Request){
+  return new Response(null,{status:allowedCrawlerOrigin(request)?204:403,headers:crawlerHeaders(request)});
+}
 export async function POST(request:Request){
-  const headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
+  const headers=crawlerHeaders(request);
   const json=(data:unknown,status=200)=>Response.json(data,{status,headers});
-  const origin=request.headers.get('origin');
-  if(origin&&origin!==new URL(request.url).origin)return json({error:'Use this tool from its own website.'},403);
+  if(!allowedCrawlerOrigin(request))return json({error:'Use this tool from its own website.'},403);
   if(!request.headers.get('content-type')?.includes('application/json'))return json({error:'Expected a JSON request.'},415);
   const ip=request.headers.get('cf-connecting-ip')||'local',now=Date.now();
   if(recent.size>5000)for(const [key,value]of recent)if(value.reset<now)recent.delete(key);
