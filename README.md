@@ -7,11 +7,11 @@ Turn a public website into a visual library of reusable section layouts, with ge
 ## Features
 
 - Navigation discovery and bounded scans of up to 24 selected pages.
-- 24 editable section templates with neutral copy and placeholder artwork.
+- Source-measured section previews with generic copy and placeholder artwork, plus 24 optional manual templates.
 - Source-page links and evidence for each suggested layout.
 - Review, rename, merge, add, include, and exclude layouts.
 - Standalone HTML, scoped Elementor HTML-widget markup, and project JSON exports.
-- Browser-local saved projects, rendered HTML import, and a reviewed sample library.
+- Browser-local saved projects, rendered HTML import.
 
 ## Hosting architecture
 
@@ -21,7 +21,7 @@ The backend allows browser requests from its own site and https://brainbytescrea
 
 Projects remain in the visitor's browser; clearing browser storage removes saved projects. The backend processes submitted website URLs to fetch pages but does not provide project storage.
 
-Live scans depend on the backend staying available. The sample, manual editing, project import, and HTML exports run in the browser. JavaScript-heavy or bot-protected websites may require rendered HTML import. Detection produces suggestions that should be reviewed; it does not inspect private CMS templates or guarantee exact Elementor widget detection.
+Live scans depend on the backend staying available. Manual editing, project import, and HTML exports run in the browser. JavaScript-heavy or bot-protected websites may require rendered HTML import. Live scans draw data-only SVG previews from the measured geometry, spacing, typography, and content positions of each section. Original text and images are replaced. Different compositions remain separate even when they share a category. These are desktop composition references, not executable page-builder templates or a responsive clone. Detection should be reviewed and cannot inspect private CMS templates. Older saved scans require rescanning to replace their legacy generic template previews.
 
 ## Development
 
@@ -40,7 +40,7 @@ For the static interface's local development server:
 npx vite --config vite.pages.config.ts
 ~~~
 
-Visit the printed URL including /section-library-generator/. A local origin is deliberately not allowed by the production crawler. Use the full-stack development server (npm run dev) for same-origin live scans, or use sample/import features in the static preview.
+Visit the printed URL including /section-library-generator/. A local origin is deliberately not allowed by the production crawler. Use the full-stack development server (npm run dev) for same-origin live scans, or use import features in the static preview.
 
 ## Publish changes to GitHub Pages
 
@@ -59,6 +59,7 @@ To use another crawler backend, set ATLAS_CRAWLER_URL when building the Pages in
 - docs/: generated files published by GitHub Pages.
 - lib/analyze.ts: navigation discovery and browser layout analysis.
 - lib/model.ts, lib/presentation.ts: validation, templates, and exports.
+- lib/section-preview.ts: bounded geometry capture and safe, generic SVG rendering.
 - app/api/page/route.ts, lib/fetch-page.ts, lib/crawler-origin.ts: crawler and request policy.
 - scripts/test-atlas.mjs: validation checks.
 

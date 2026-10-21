@@ -1,4 +1,5 @@
 import {Layout,PageSource,ScanPage,pattern,publicHref,mergeLayout} from './model';
+import {captureSection} from './section-preview';
 import type {FetchedPage} from './page-client';
 export {fetchPage} from './page-client';
 export type {FetchedPage} from './page-client';
@@ -32,7 +33,7 @@ function sanitizedDocument(page:FetchedPage){
   // No target scripts, remote assets, or forms can execute in the measurement frame.
   const csp="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; form-action 'none'; base-uri 'none'";
   const inline=[...doc.head.querySelectorAll('style')].map(s=>s.textContent||'').join('\n');
-  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}"><style>${page.css.map(cleanCSS).join('\n')}\n${inline}</style><style>html{width:1440px}body{margin:0}*,*:before,*:after{animation:none!important;transition:none!important;opacity:1!important;visibility:visible!important}img{max-width:100%}a{cursor:default}video{min-height:180px}header,footer,nav,[role=navigation],.elementor-location-header,.elementor-location-footer{display:none!important}</style></head><body>${doc.body.innerHTML}</body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}"><style>${page.css.map(cleanCSS).join('\n')}\n${inline}</style><style>html{width:1440px}body{margin:0}*,*:before,*:after{animation:none!important;transition:none!important;opacity:1!important;visibility:visible!important}img{max-width:100%}a{cursor:default}video{min-height:180px}header,footer,nav,[role=navigation],.elementor-location-header,.elementor-location-footer{display:none!important}</style></head><body class="${(doc.body.className||'').replace(/[^a-zA-Z0-9_ -]/g,'')}">${doc.body.innerHTML}</body></html>`;
 }
 function concise(s:string,max=150){return s.replace(/\s+/g,' ').trim().slice(0,max);}
 export async function analyzePage(page:FetchedPage,source:PageSource,signal?:AbortSignal):Promise<{layouts:Layout[];sections:number;warning?:string}>{
@@ -70,7 +71,7 @@ export async function analyzePage(page:FetchedPage,source:PageSource,signal?:Abo
     let layouts:Layout[]=[];let count=0;
     function emit(type:number,e:Element,why:string,columns?:number){
       const title=pattern(type);const heading=concise(e.querySelector('h1,h2,h3')?.textContent||'Untitled section');
-      layouts=mergeLayout(layouts,{id:crypto.randomUUID(),type,title:title[0],category:title[1],included:true,reviewed:false,columns,sources:[source],evidence:[{page:source.url,heading,observation:why,position:Math.round(rect(e).top)}]});
+      layouts=mergeLayout(layouts,{id:crypto.randomUUID(),type,title:title[0],category:title[1],included:true,reviewed:false,columns,preview:captureSection(e,win),sources:[source],evidence:[{page:source.url,heading,observation:why,position:Math.round(rect(e).top)}]});
     }
     for(const e of unique){
       const text=concise(e.textContent||'',7000),r=rect(e);if(text.length<12&&!e.querySelector('img,video'))continue;
