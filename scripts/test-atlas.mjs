@@ -5,10 +5,25 @@ import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 const dir=path.resolve('.sites-runtime/atlas-tests');await mkdir(dir,{recursive:true});
 const exports={};
-for(const name of ['model','presentation','fetch-page','crawler-origin']){
+for(const name of ['model','presentation','fetch-page','crawler-origin','page-client']){
  const out=path.join(dir,name+'.mjs');await build({entryPoints:[`lib/${name}.ts`],outfile:out,bundle:true,platform:'node',format:'esm',logLevel:'silent'});exports[name]=await import(pathToFileURL(out).href);
 }
 const {safeUrl}=exports['fetch-page'];
+// Switching websites must submit the new URL; failures must never load sample data.
+const originalFetch=globalThis.fetch,requests=[];
+try{
+ globalThis.fetch=async (_endpoint,init)=>{const {url}=JSON.parse(init.body);requests.push({url,cache:init.cache});return Response.json({url,html:`<h1>${url}</h1>`,css:[],warnings:[]});};
+ const client=exports['page-client'];
+ await client.fetchPage('https://mediavenue.com/');
+ const aloha=await client.fetchPage(' https://aloha-orthodontics.com/ ');
+ assert.equal(aloha.url,'https://aloha-orthodontics.com/');
+ assert.deepEqual(requests.map(r=>r.url),['https://mediavenue.com/','https://aloha-orthodontics.com/']);
+ assert(requests.every(r=>r.cache==='no-store'));
+ globalThis.fetch=async()=>Response.json({error:'Site unavailable'},{status:422});
+ await assert.rejects(client.fetchPage('https://aloha-orthodontics.com/'),/Site unavailable/);
+ globalThis.fetch=async()=>Response.json({layouts:[]});
+ await assert.rejects(client.fetchPage('https://aloha-orthodontics.com/'),/invalid response/);
+}finally{globalThis.fetch=originalFetch;}
 const {allowedCrawlerOrigin,crawlerHeaders,GITHUB_PAGES_ORIGIN}=exports['crawler-origin'];
 for(const origin of [GITHUB_PAGES_ORIGIN,'https://atlas.example']){
  const request=new Request('https://atlas.example/api/page',{headers:{origin}});

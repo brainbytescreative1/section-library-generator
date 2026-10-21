@@ -1,15 +1,11 @@
 import {Layout,PageSource,ScanPage,pattern,publicHref,mergeLayout} from './model';
-export type FetchedPage={url:string;html:string;css:string[];warnings:string[]};
-declare const __ATLAS_CRAWLER_URL__: string | undefined;
-const crawlerURL=typeof __ATLAS_CRAWLER_URL__==='string'?__ATLAS_CRAWLER_URL__:'/api/page';
-export async function fetchPage(url:string,signal?:AbortSignal):Promise<FetchedPage>{
-  const response=await fetch(crawlerURL,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({url}),signal});
-  const data=await response.json() as FetchedPage & {error?:string};if(!response.ok)throw new Error(data.error||'This page could not be read.');return data;
-}
+import type {FetchedPage} from './page-client';
+export {fetchPage} from './page-client';
+export type {FetchedPage} from './page-client';
 function dom(html:string){return new DOMParser().parseFromString(html,'text/html');}
 export function discoverNavigation(page:FetchedPage):{title:string;pages:ScanPage[]}{
   const doc=dom(page.html),base=new URL(page.url),links=new Map<string,ScanPage>();
-  const add=(href:string,title:string)=>{try{const u=new URL(href,base);u.hash='';for(const k of [...u.searchParams.keys()])if(/^utm_|^(fbclid|gclid|ref)$/i.test(k))u.searchParams.delete(k);if(u.hostname.replace(/^www\./,'')===base.hostname.replace(/^www\./,'')){u.hostname=base.hostname;u.protocol=base.protocol;}if(u.origin!==base.origin||!publicHref(u.href)||/\.(pdf|zip|png|jpe?g|svg|webp|gif|mp4|docx?|xlsx?)$/i.test(u.pathname)||/\/(wp-admin|wp-login|cart|checkout|account|login|signin|logout|feed|search)(\/|$)/i.test(u.pathname))return;const key=u.origin+(u.pathname.replace(/\/+$/,'')||'/')+u.search;if(links.size<24)links.set(key,{url:u.href,title:title.trim().replace(/\s+/g,' ').slice(0,80)||u.pathname,selected:links.size<12,status:'ready'});}catch{}};
+  const add=(href:string,title:string)=>{try{const u=new URL(href,base);u.hash='';for(const k of [...u.searchParams.keys()])if(/^utm_|^(fbclid|gclid|ref)$/i.test(k))u.searchParams.delete(k);if(u.hostname.replace(/^www\./,'')===base.hostname.replace(/^www\./,'')){u.hostname=base.hostname;u.protocol=base.protocol;}if(u.origin!==base.origin||!publicHref(u.href)||/\.(pdf|zip|png|jpe?g|svg|webp|gif|mp4|docx?|xlsx?)$/i.test(u.pathname)||/\/(wp-admin|wp-login|cart|checkout|account|login|signin|logout|feed|search)(\/|$)/i.test(u.pathname))return;const key=u.origin+(u.pathname.replace(/\/+$/,'')||'/')+u.search;if(!links.has(key)&&links.size<24)links.set(key,{url:u.href,title:title.trim().replace(/\s+/g,' ').slice(0,80)||u.pathname,selected:links.size<12,status:'ready'});}catch{}};
   add(base.href,'Home / starting page');
   let navs=[...doc.querySelectorAll('nav,[role="navigation"],header,.site-header,#masthead,.elementor-location-header')];
   if(!navs.length)navs=[...doc.querySelectorAll('[class*="menu"],[id*="menu"]')].filter(e=>!e.closest('footer')).slice(0,5);
