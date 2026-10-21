@@ -1,23 +1,4 @@
-import type { Metadata } from "next";
-import "./atlas.css";
-
-export const metadata: Metadata = {
-  title: "Layout Atlas — From website to layout library",
-  description: "Discover reusable website section layouts, review generic examples, and export a source-linked HTML presentation.",
-  icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-  },
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body className="antialiased">{children}</body>
-    </html>
-  );
-}
+import type { Metadata } from 'next';
+import './globals.css';
+export const metadata: Metadata={title:'Site Atlas — Map your next move',description:'Crawl a website, map its navigation and discover reusable layouts for your next platform.'};
+export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}
